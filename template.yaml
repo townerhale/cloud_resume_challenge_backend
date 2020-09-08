@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    Serverless app that receives API calls to get number from DynaboDb table, as well as 
+   update the number and post the newly updated number on the website
+Globals:
+  Function:
+    Timeout: 60 
+
+Resources:
+  visitCountFunction: # Needs to match outputs
+    Type: AWS::Serverless::Function 
+    Properties:
+      Environment: 
+        Variables:
+          TABLE_NAME: !Ref DynamoDBTable
+      #Role: !GetAtt visitCountFunctionIAMRole.Arn
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+              Resource:
+                - !GetAtt DynamoDBTable.Arn
+      Handler: function.handler #refers to the function file
+      Runtime: python3.6 # must match with environment variable
+      Events:
+        TestAppAPI:
+          Type: Api 
+          Properties:
+            Path: /Prod 
+            Method: get
+  DynamoDBTable:
+    Type: AWS::Serverless::SimpleTable #simple table with one primary key(can only have one) 
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      
+
+Outputs:
+  CountAppAPI:
+    Description: "API Gateway endpoint URL for Visitor Count function"
+    Value: !Sub "https://6sf2pz2771.execute-api.us-east-1.amazonaws.com/Prod/counter" #url to access on AWS
+  visitCountFunction:
+    Description: "Visit Counter Function ARN"
+    Value: !GetAtt visitCountFunction.Arn
+
